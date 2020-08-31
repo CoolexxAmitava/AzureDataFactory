@@ -5,11 +5,6 @@
 			"referenceName": "SourceDBLinkedService",
 			"type": "LinkedServiceReference"
 		},
-		"parameters": {
-			"inputTable": {
-				"type": "string"
-			}
-		},
 		"annotations": [],
 		"type": "AzureSqlTable",
 		"schema": [
