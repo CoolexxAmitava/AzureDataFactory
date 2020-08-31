@@ -1,5 +1,5 @@
 {
-	"name": "pipeline1",
+	"name": "pipelineSCD1",
 	"properties": {
 		"activities": [
 			{
@@ -21,7 +21,9 @@
 						"partitionOption": "None"
 					},
 					"sink": {
-						"type": "AzureSqlSink"
+						"type": "AzureSqlSink",
+						"preCopyScript": "truncate table dbo.product_dim",
+						"disableMetricsCollection": false
 					},
 					"enableStaging": false,
 					"translator": {
@@ -49,7 +51,14 @@
 			{
 				"name": "dataflow1",
 				"type": "ExecuteDataFlow",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "Copy data Source to Staging",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "7.00:00:00",
 					"retry": 0,
