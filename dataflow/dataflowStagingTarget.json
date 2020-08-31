@@ -33,6 +33,13 @@
 						"type": "DatasetReference"
 					},
 					"name": "UpdateSink"
+				},
+				{
+					"dataset": {
+						"referenceName": "TargetProductTable",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
 				}
 			],
 			"transformations": [
@@ -52,10 +59,16 @@
 					"name": "InsertNewRecordExists"
 				},
 				{
-					"name": "Join1"
+					"name": "JoinForSurrogateKey"
+				},
+				{
+					"name": "DerivedColumns"
+				},
+				{
+					"name": "SurrogateKeyCalculation"
 				}
 			],
-			"script": "source(output(\n\t\tproduct_id as integer,\n\t\tproduct_name as string,\n\t\tunit_price as double,\n\t\tproduct_desc as string,\n\t\teligible_promotion as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> sourceStaging\nsource(output(\n\t\tproduct_key as integer,\n\t\tproduct_id as integer,\n\t\tproduct_name as string,\n\t\tunit_price as double,\n\t\tproduct_desc as string,\n\t\teligible_promotion as integer,\n\t\tadded_date as timestamp,\n\t\tupdated_date as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> sourceTarget\nsource(output(\n\t\tMaxSurrogateKey as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: 'select isNull(max(product_key),0) as MaxSurrogateKey from dbo.product_dim',\n\tformat: 'query') ~> MaxSurrogateKey\nsourceStaging, sourceTarget exists(sourceStaging@product_id == sourceTarget@product_id,\n\tnegate:false,\n\tbroadcast: 'auto')~> ExistsForUpdate\nExistsForUpdate, sourceTarget lookup(sourceStaging@product_id == sourceTarget@product_id,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> ProductKeyAddedDateLookup\nProductKeyAddedDateLookup derive(updated_date = currentTimestamp()) ~> UpdatedDateDerivedColumn\nUpdatedDateDerivedColumn alterRow(updateIf(true())) ~> UpdateAlterRow\nsourceStaging, sourceTarget exists(sourceStaging@product_id == sourceTarget@product_id,\n\tnegate:true,\n\tbroadcast: 'auto')~> InsertNewRecordExists\nInsertNewRecordExists, MaxSurrogateKey join(true(),\n\tjoinType:'cross',\n\tbroadcast: 'auto')~> Join1\nUpdateAlterRow sink(input(\n\t\tproduct_key as integer,\n\t\tproduct_id as integer,\n\t\tproduct_name as string,\n\t\tunit_price as double,\n\t\tproduct_desc as string,\n\t\teligible_promotion as integer,\n\t\tadded_date as timestamp,\n\t\tupdated_date as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:true,\n\tupsertable:false,\n\tkeys:['product_id'],\n\tformat: 'table',\n\tmapColumn(\n\t\tproduct_key,\n\t\tproduct_id = sourceStaging@product_id,\n\t\tproduct_name = sourceStaging@product_name,\n\t\tunit_price = sourceStaging@unit_price,\n\t\tproduct_desc = sourceStaging@product_desc,\n\t\teligible_promotion = sourceStaging@eligible_promotion,\n\t\tadded_date,\n\t\tupdated_date\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> UpdateSink"
+			"script": "source(output(\n\t\tproduct_id as integer,\n\t\tproduct_name as string,\n\t\tunit_price as double,\n\t\tproduct_desc as string,\n\t\teligible_promotion as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> sourceStaging\nsource(output(\n\t\tproduct_key as integer,\n\t\tproduct_id as integer,\n\t\tproduct_name as string,\n\t\tunit_price as double,\n\t\tproduct_desc as string,\n\t\teligible_promotion as integer,\n\t\tadded_date as timestamp,\n\t\tupdated_date as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> sourceTarget\nsource(output(\n\t\tMaxSurrogateKey as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: 'select isNull(max(product_key),0) as MaxSurrogateKey from dbo.product_dim',\n\tformat: 'query') ~> MaxSurrogateKey\nsourceStaging, sourceTarget exists(sourceStaging@product_id == sourceTarget@product_id,\n\tnegate:false,\n\tbroadcast: 'auto')~> ExistsForUpdate\nExistsForUpdate, sourceTarget lookup(sourceStaging@product_id == sourceTarget@product_id,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> ProductKeyAddedDateLookup\nProductKeyAddedDateLookup derive(updated_date = currentTimestamp()) ~> UpdatedDateDerivedColumn\nUpdatedDateDerivedColumn alterRow(updateIf(true())) ~> UpdateAlterRow\nsourceStaging, sourceTarget exists(sourceStaging@product_id == sourceTarget@product_id,\n\tnegate:true,\n\tbroadcast: 'auto')~> InsertNewRecordExists\nInsertNewRecordExists, MaxSurrogateKey join(true(),\n\tjoinType:'cross',\n\tbroadcast: 'auto')~> JoinForSurrogateKey\nSurrogateKeyCalculation derive(product_key = MaxSurrogateKey+s_key,\n\t\tadded_date = currentTimestamp()) ~> DerivedColumns\nJoinForSurrogateKey keyGenerate(output(s_key as long),\n\tstartAt: 1L) ~> SurrogateKeyCalculation\nUpdateAlterRow sink(input(\n\t\tproduct_key as integer,\n\t\tproduct_id as integer,\n\t\tproduct_name as string,\n\t\tunit_price as double,\n\t\tproduct_desc as string,\n\t\teligible_promotion as integer,\n\t\tadded_date as timestamp,\n\t\tupdated_date as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:true,\n\tupsertable:false,\n\tkeys:['product_id'],\n\tformat: 'table',\n\tmapColumn(\n\t\tproduct_key,\n\t\tproduct_id = sourceStaging@product_id,\n\t\tproduct_name = sourceStaging@product_name,\n\t\tunit_price = sourceStaging@unit_price,\n\t\tproduct_desc = sourceStaging@product_desc,\n\t\teligible_promotion = sourceStaging@eligible_promotion,\n\t\tadded_date,\n\t\tupdated_date\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> UpdateSink\nDerivedColumns sink(input(\n\t\tproduct_key as integer,\n\t\tproduct_id as integer,\n\t\tproduct_name as string,\n\t\tunit_price as double,\n\t\tproduct_desc as string,\n\t\teligible_promotion as integer,\n\t\tadded_date as timestamp,\n\t\tupdated_date as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tmapColumn(\n\t\tproduct_key,\n\t\tproduct_id,\n\t\tproduct_name,\n\t\tunit_price,\n\t\tproduct_desc,\n\t\teligible_promotion,\n\t\tadded_date\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> sink1"
 		}
 	}
 }
