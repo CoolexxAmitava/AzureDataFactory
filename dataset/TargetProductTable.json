@@ -5,11 +5,6 @@
 			"referenceName": "TargetDBLinkedService",
 			"type": "LinkedServiceReference"
 		},
-		"parameters": {
-			"outputTable": {
-				"type": "string"
-			}
-		},
 		"annotations": [],
 		"type": "AzureSqlTable",
 		"schema": [],
