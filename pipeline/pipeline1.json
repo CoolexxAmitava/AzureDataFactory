@@ -60,7 +60,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "dataflow1",
+						"referenceName": "dataflowStagingTarget",
 						"type": "DataFlowReference"
 					},
 					"compute": {
