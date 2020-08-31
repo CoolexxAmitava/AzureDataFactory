@@ -22,7 +22,7 @@
 					},
 					"sink": {
 						"type": "AzureSqlSink",
-						"preCopyScript": "truncate table dbo.product_dim",
+						"preCopyScript": "truncate table dbo.product_dim_stg",
 						"disableMetricsCollection": false
 					},
 					"enableStaging": false,
