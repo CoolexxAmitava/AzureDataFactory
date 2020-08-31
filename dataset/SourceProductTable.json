@@ -1,0 +1,21 @@
+{
+	"name": "SourceProductTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SourceDBLinkedService",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"inputTable": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "product_table"
+		}
+	}
+}
