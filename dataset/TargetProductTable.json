@@ -1,0 +1,21 @@
+{
+	"name": "TargetProductTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "TargetDBLinkedService",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"outputTable": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "product_dim"
+		}
+	}
+}
