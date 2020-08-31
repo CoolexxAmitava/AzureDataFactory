@@ -1,0 +1,16 @@
+{
+	"name": "TargetProductStaging",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "TargetDBLinkedService",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "product_dim_stg"
+		}
+	}
+}
