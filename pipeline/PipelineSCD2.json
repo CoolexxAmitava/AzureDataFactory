@@ -113,7 +113,7 @@
 				]
 			},
 			{
-				"name": "dataflow1",
+				"name": "dataflow Process",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [
 					{
@@ -135,6 +135,13 @@
 					"dataflow": {
 						"referenceName": "dataflowSCD2",
 						"type": "DataFlowReference"
+					},
+					"staging": {
+						"linkedService": {
+							"referenceName": "linkedServiceADLS",
+							"type": "LinkedServiceReference"
+						},
+						"folderPath": "dataadls/loadpolybaseinput"
 					},
 					"compute": {
 						"coreCount": 8,
